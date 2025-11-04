@@ -87,13 +87,14 @@
         chooseBtn.disabled = false;
         const tablesLoading = document.getElementById('tables-loading');
         if (tablesLoading) tablesLoading.style.display = '';
-        // prefetch reserved tables so modal is ready
+        // prefetch available/reserved tables so modal is ready
+        // we request available tables by default (server supports ?type=available)
         fetchTables(true)
           .then((data) => {
             renderTablesToModal(data);
           })
           .catch((err) => {
-            console.error('Failed to prefetch reserved tables', err);
+            console.error('Failed to prefetch tables', err);
             const tl = document.getElementById('tables-loading');
             if (tl) tl.textContent = 'Failed to load tables (prefetch).';
           });
@@ -184,70 +185,59 @@
     tablesModal.classList.add('hidden');
   }
 
-  // Improved fetch: when something goes wrong, show server response text if available.
+  // Improved fetch with timeout and better fallbacks
   function fetchTables(useReserved) {
-    const reservedUrl = 'tables/get_reserved_tables.php';
-    const allUrl = 'tables/get_all_tables.php';
-    const url = useReserved ? reservedUrl : allUrl;
+    const base = 'tables/get_reserved_tables.php';
+    // When checkbox is checked we want to show available tables by default.
+    // Map useReserved param: if true we will request 'available' (so it shows seats).
+    // If you want reserved-only behavior, change mapping.
+    const type = useReserved ? 'available' : 'reserved';
+    const url = base + '?type=' + encodeURIComponent(type);
 
-    // helper to try parse JSON safely and fallback to response.text()
-    function fetchAndParse(u) {
-      return fetch(u, { method: 'GET', credentials: 'same-origin' })
-        .then((r) => {
-          if (!r.ok) {
-            // return response text for diagnostics (server may return HTML error page)
-            return r.text().then((text) => {
-              const err = new Error('HTTP ' + r.status + ' ' + r.statusText);
-              err.status = r.status;
-              err.responseText = text;
-              throw err;
-            });
-          }
-          // try parse json; if parse fails read text
-          return r.text().then((txt) => {
-            try {
-              const json = JSON.parse(txt || '[]');
-              return json;
-            } catch (parseErr) {
-              const e = new Error('Invalid JSON from server');
-              e.responseText = txt;
-              throw e;
-            }
-          });
-        });
+    function fetchWithTimeout(resource, options = {}, ms = 8000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), ms);
+      return fetch(resource, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
     }
 
-    return fetchAndParse(url)
-      .catch((err) => {
-        // if we tried allUrl (non-reserved) and it failed, fallback to reservedUrl
-        if (!useReserved && url !== reservedUrl) {
-          return fetchAndParse(reservedUrl);
+    // Try primary request (with timeout), then fallback to ?type=all
+    return fetchWithTimeout(url, { method: 'GET', credentials: 'same-origin' }, 8000)
+      .then(async (r) => {
+        if (!r.ok) {
+          // fallback: try all
+          const fall = await fetchWithTimeout(base + '?type=all', { method: 'GET', credentials: 'same-origin' }, 8000).catch(() => null);
+          if (fall && fall.ok) return fall.json();
+          const txt = await r.text().catch(() => '');
+          const e = new Error('HTTP ' + r.status + ' ' + r.statusText);
+          e.responseText = txt;
+          throw e;
         }
-        // If the error object has responseText, expose it to the UI for debugging
+        const text = await r.text();
+        try {
+          return JSON.parse(text || '[]');
+        } catch (err) {
+          // fallback: try all
+          const fall = await fetchWithTimeout(base + '?type=all', { method: 'GET', credentials: 'same-origin' }, 8000).catch(() => null);
+          if (fall && fall.ok) return fall.json();
+          const e = new Error('Invalid JSON from server');
+          e.responseText = text;
+          throw e;
+        }
+      })
+      .catch((err) => {
         const tablesLoading = document.getElementById('tables-loading');
-        const tablesList = document.getElementById('tables-list');
-        const tablesEmpty = document.getElementById('tables-empty');
-        if (tablesList) tablesList.style.display = 'none';
-        if (tablesEmpty) tablesEmpty.style.display = 'none';
         if (tablesLoading) {
-          if (err && err.responseText) {
-            // show server response (shortened) in the loading area for debugging
+          if (err.name === 'AbortError') {
+            tablesLoading.textContent = 'Request timed out — try again or check the server.';
+          } else if (err && err.responseText) {
             let t = String(err.responseText);
-            // try to prettify JSON if present
-            try {
-              const parsed = JSON.parse(t);
-              t = JSON.stringify(parsed, null, 2);
-            } catch (e) {}
-            // limit length to avoid overflowing modal
-            if (t.length > 2000) t = t.slice(0, 2000) + '\n... (truncated)';
-            tablesLoading.textContent = 'Failed to load tables: Server response:\n' + t;
-          } else if (err && err.status) {
-            tablesLoading.textContent = 'Failed to load tables: HTTP ' + err.status;
+            try { t = JSON.stringify(JSON.parse(t), null, 2); } catch (e) {}
+            tablesLoading.textContent = 'Failed to load tables: ' + (t.length > 1000 ? t.slice(0,1000) + '…' : t);
           } else {
-            tablesLoading.textContent = 'Failed to load tables';
+            tablesLoading.textContent = 'Failed to load tables: ' + (err.message || 'Unknown error');
           }
         }
-        // rethrow so callers can still handle if desired
         throw err;
       });
   }
