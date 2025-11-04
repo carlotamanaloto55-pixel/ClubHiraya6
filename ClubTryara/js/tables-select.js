@@ -1,18 +1,12 @@
 /**
  * tables-select.js (event-delegation version)
- * - Inserts the reserved-table UI above .compute-actions
- * - Uses document-level delegated click handlers so event wiring survives DOM replacements
- * - Fetches reserved tables from tables/get_reserved_tables.php when checkbox is checked
- * - Renders table rows and supports Select -> applies table price into order computation
- *
- * Drop this file at: ClubTryara/js/tables-select.js (overwrite existing)
+ * - Same as previous but with improved error/debug handling when fetch fails.
  */
 
 (function () {
   let selectedTable = null;
   let observer = null;
 
-  // Ensure the reserved UI exists (idempotent)
   function ensureReservedUI() {
     if (document.getElementById('use-reserved-table')) return;
 
@@ -49,7 +43,7 @@
     chooseBtn.id = 'open-tables-btn';
     chooseBtn.className = 'btn-small';
     chooseBtn.textContent = 'Choose table';
-    chooseBtn.disabled = false; // clickable; the script will fetch reserved when checkbox is checked
+    chooseBtn.disabled = true;
     chooseBtn.style.marginTop = '8px';
     reservedBlock.appendChild(chooseBtn);
 
@@ -60,7 +54,7 @@
     summary.style.fontSize = '13px';
 
     summary.innerHTML =
-      'Selected table: <strong id="selected-table-name">—</strong> (Table <span id="selected-table-number">—</span>, Party size: <span id="selected-table-party">—</span>, Price: ₱<span id="selected-table-price">0.00</span>) ';
+      'Selected table: <strong id="selected-table-name">—</strong> (Table <span id="selected-table-number">—</span>, Party size: <span id="selected-table-party">—</span>, Price: ₱<span id="selected-table-price">0.00</span>)';
 
     const clearBtn = document.createElement('button');
     clearBtn.type = 'button';
@@ -87,9 +81,29 @@
         orderSection.appendChild(reservedBlock);
       }
     }
+
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        chooseBtn.disabled = false;
+        const tablesLoading = document.getElementById('tables-loading');
+        if (tablesLoading) tablesLoading.style.display = '';
+        // prefetch reserved tables so modal is ready
+        fetchTables(true)
+          .then((data) => {
+            renderTablesToModal(data);
+          })
+          .catch((err) => {
+            console.error('Failed to prefetch reserved tables', err);
+            const tl = document.getElementById('tables-loading');
+            if (tl) tl.textContent = 'Failed to load tables (prefetch).';
+          });
+      } else {
+        chooseBtn.disabled = true;
+        clearSelectedTable();
+      }
+    });
   }
 
-  // Render rows into modal table
   function renderTablesToModal(rows) {
     const tablesLoading = document.getElementById('tables-loading');
     const tablesEmpty = document.getElementById('tables-empty');
@@ -142,7 +156,6 @@
       selectBtn.className = 'btn-small table-select-btn';
       selectBtn.type = 'button';
       selectBtn.textContent = 'Select';
-      // store table data on dataset so delegated handler can pick it up
       selectBtn.dataset.table = JSON.stringify({
         id: t.id || t.table_id || null,
         name: t.name || t.guest_name || '',
@@ -158,7 +171,6 @@
     });
   }
 
-  // Show / hide modal
   function showModal() {
     const tablesModal = document.getElementById('tablesModal');
     if (!tablesModal) return;
@@ -172,24 +184,74 @@
     tablesModal.classList.add('hidden');
   }
 
-  // Fetch tables: reserved if useReserved true, otherwise attempts all (fallback)
+  // Improved fetch: when something goes wrong, show server response text if available.
   function fetchTables(useReserved) {
     const reservedUrl = 'tables/get_reserved_tables.php';
-    const allUrl = 'tables/get_all_tables.php'; // optional; if missing will fallback
+    const allUrl = 'tables/get_all_tables.php';
     const url = useReserved ? reservedUrl : allUrl;
 
-    return fetch(url, { method: 'GET', credentials: 'same-origin' })
-      .then((r) => {
-        if (!r.ok) {
-          // if we tried allUrl and it failed, fallback to reservedUrl
-          if (!useReserved) return fetch(reservedUrl, { method: 'GET', credentials: 'same-origin' });
-          throw new Error('Network response not ok');
+    // helper to try parse JSON safely and fallback to response.text()
+    function fetchAndParse(u) {
+      return fetch(u, { method: 'GET', credentials: 'same-origin' })
+        .then((r) => {
+          if (!r.ok) {
+            // return response text for diagnostics (server may return HTML error page)
+            return r.text().then((text) => {
+              const err = new Error('HTTP ' + r.status + ' ' + r.statusText);
+              err.status = r.status;
+              err.responseText = text;
+              throw err;
+            });
+          }
+          // try parse json; if parse fails read text
+          return r.text().then((txt) => {
+            try {
+              const json = JSON.parse(txt || '[]');
+              return json;
+            } catch (parseErr) {
+              const e = new Error('Invalid JSON from server');
+              e.responseText = txt;
+              throw e;
+            }
+          });
+        });
+    }
+
+    return fetchAndParse(url)
+      .catch((err) => {
+        // if we tried allUrl (non-reserved) and it failed, fallback to reservedUrl
+        if (!useReserved && url !== reservedUrl) {
+          return fetchAndParse(reservedUrl);
         }
-        return r.json();
+        // If the error object has responseText, expose it to the UI for debugging
+        const tablesLoading = document.getElementById('tables-loading');
+        const tablesList = document.getElementById('tables-list');
+        const tablesEmpty = document.getElementById('tables-empty');
+        if (tablesList) tablesList.style.display = 'none';
+        if (tablesEmpty) tablesEmpty.style.display = 'none';
+        if (tablesLoading) {
+          if (err && err.responseText) {
+            // show server response (shortened) in the loading area for debugging
+            let t = String(err.responseText);
+            // try to prettify JSON if present
+            try {
+              const parsed = JSON.parse(t);
+              t = JSON.stringify(parsed, null, 2);
+            } catch (e) {}
+            // limit length to avoid overflowing modal
+            if (t.length > 2000) t = t.slice(0, 2000) + '\n... (truncated)';
+            tablesLoading.textContent = 'Failed to load tables: Server response:\n' + t;
+          } else if (err && err.status) {
+            tablesLoading.textContent = 'Failed to load tables: HTTP ' + err.status;
+          } else {
+            tablesLoading.textContent = 'Failed to load tables';
+          }
+        }
+        // rethrow so callers can still handle if desired
+        throw err;
       });
   }
 
-  // Apply selected table object to UI and computation
   function applySelectedTable(table) {
     selectedTable = table;
 
@@ -210,18 +272,13 @@
     if (checkbox && !checkbox.checked) checkbox.checked = true;
     if (openBtn) openBtn.disabled = false;
 
-    // Dispatch event for integration
     const ev = new CustomEvent('table-selected', { detail: table });
     window.dispatchEvent(ev);
 
-    // Persist price to body dataset for computeNumbers fallback
     document.body.dataset.reservedTablePrice = (parseFloat(table.price) || 0);
-
-    // Try to apply table price to totals
     applyTablePriceToComputation(parseFloat(table.price) || 0);
   }
 
-  // Clear selection
   function clearSelectedTable() {
     selectedTable = null;
     const selectedName = document.getElementById('selected-table-name');
@@ -245,10 +302,9 @@
     applyTablePriceToComputation(0, { clear: true });
 
     if (checkbox) checkbox.checked = false;
-    if (openBtn) openBtn.disabled = false;
+    if (openBtn) openBtn.disabled = true;
   }
 
-  // Try to apply price to existing totals integration points
   function applyTablePriceToComputation(price, opts = {}) {
     try {
       if (typeof window.applyReservedTablePrice === 'function') {
@@ -263,8 +319,6 @@
         return;
       }
 
-      // Fallback: computeNumbers/renderOrder in app.js reads document.body.dataset.reservedTablePrice
-      // and will include it on next render. Trigger a re-render if the app exposes renderOrder()
       if (typeof window.renderOrder === 'function') {
         if (opts.clear) document.body.dataset.reservedTablePrice = 0;
         else document.body.dataset.reservedTablePrice = price;
@@ -275,25 +329,28 @@
     }
   }
 
-  // Delegated click handler (for buttons that may be replaced)
   function delegatedClickHandler(e) {
     const chooseBtn = e.target.closest && e.target.closest('#open-tables-btn');
     if (chooseBtn) {
-      // Open modal and fetch appropriate table list based on checkbox state
-      const useReserved = !!(document.getElementById('use-reserved-table') && document.getElementById('use-reserved-table').checked);
+      const checkbox = document.getElementById('use-reserved-table');
+      const useReserved = !!(checkbox && checkbox.checked);
+      if (!useReserved) {
+        console.warn('Please check "Customer has a reserved table" first.');
+        chooseBtn.animate && chooseBtn.animate([{ background: '#f8d7da' }, { background: '' }], { duration: 300 });
+        return;
+      }
+
       const tablesLoading = document.getElementById('tables-loading');
-      if (tablesLoading) tablesLoading.style.display = '';
+      if (tablesLoading) {
+        tablesLoading.style.display = '';
+        tablesLoading.textContent = 'Loading...';
+      }
       showModal();
       fetchTables(useReserved)
         .then((data) => renderTablesToModal(data))
         .catch((err) => {
           console.error('Failed to fetch tables', err);
-          const tl = document.getElementById('tables-loading');
-          if (tl) tl.textContent = 'Failed to load tables';
-          const tlst = document.getElementById('tables-list');
-          if (tlst) tlst.style.display = 'none';
-          const tempty = document.getElementById('tables-empty');
-          if (tempty) tempty.style.display = 'none';
+          // fetchTables already wrote useful info into tables-loading; keep modal open so user can see it
         });
       return;
     }
@@ -310,7 +367,6 @@
       return;
     }
 
-    // Click on a Select button in modal (delegated). We stored table data in dataset.table JSON.
     const selBtn = e.target.closest && e.target.closest('.table-select-btn');
     if (selBtn && selBtn.dataset && selBtn.dataset.table) {
       try {
@@ -323,14 +379,12 @@
       return;
     }
 
-    // Click on modal backdrop to close
     if (e.target && e.target.id === 'tablesModal') {
       hideModal();
       return;
     }
   }
 
-  // MutationObserver to re-insert UI when compute area is replaced
   function setupObserver() {
     if (observer) return;
     const orderSection = document.querySelector('.order-section');
@@ -342,13 +396,10 @@
     observer.observe(orderSection, { childList: true, subtree: true });
   }
 
-  // Init
   function init() {
     ensureReservedUI();
-    // attach delegated listener once
-    document.removeEventListener('click', delegatedClickHandler); // safe to call
+    document.removeEventListener('click', delegatedClickHandler);
     document.addEventListener('click', delegatedClickHandler);
-    // ESC key closes modal
     document.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape') hideModal();
     });
@@ -361,7 +412,6 @@
     init();
   }
 
-  // small API
   window.tablesSelect = window.tablesSelect || {};
   window.tablesSelect.getSelectedTable = () => selectedTable;
   window.tablesSelect.clearSelectedTable = clearSelectedTable;
