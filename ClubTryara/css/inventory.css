@@ -1,0 +1,495 @@
+/* inventory.css - updated club theme tweaks (colors, sglepacing, buttons)
+   Adjusted to allow full image filenames to wrap/show when Image column is toggled on.
+*/
+
+/* Base */
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: #f4f4f6;
+  color: #111;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 150px;
+  background: linear-gradient(180deg, #e44ac2 0%, #9a0076 100%);
+  box-shadow: 2px 0 10px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+  padding-top: 8px;
+  overflow: hidden; /* prevent overflowing large images */
+}
+.sidebar-header {
+  width: 100%;
+  padding: 12px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Sidebar logo - constrain size strictly to avoid large images */
+.sidebar-header-img {
+  width: 86px;      /* desired logo width */
+  height: 86px;     /* desired logo height */
+  object-fit: contain;
+  display: block;
+  max-width: 86px;
+  max-height: 86px;
+}
+
+/* Ensure no img inside sidebar exceeds container bounds */
+.sidebar img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+/* Sidebar buttons */
+.sidebar-btn {
+  width: 115px;
+  height: 80px;
+  margin: 0 auto 18px auto;
+  background: #fff;
+  color: #111;
+  border: 5px solid #000000;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  box-sizing: border-box;
+  text-decoration: none;
+  overflow: hidden; /* clip any oversized content inside the button */
+  position: relative;
+}
+
+/* Icon holder inside button - guarantee consistent sizing */
+.sidebar-btn .sidebar-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  box-sizing: border-box;
+}
+
+/* Actual icon images inside sidebar buttons */
+.sidebar-btn .sidebar-icon img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Improve spacing and avoid text wrapping */
+.sidebar-btn span:last-child {
+  font-size: 17px;
+  margin-top: 0;
+  display: block;
+  text-align: center;
+  width: 100%;
+  font-family: inter;
+  line-height: 1.05;
+  padding: 0 4px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hover and active states for sidebar buttons */
+.sidebar-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+.sidebar-btn.active {
+  background: #001B89;
+  color: #fff;
+  border: 7px solid #000;
+}
+
+/* Logout */
+.sidebar-logout {
+  width: 120px;
+  height: 49px;
+  margin: 32px auto 18px auto;
+  background: #001B89;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+/* Main Content */
+.main-content {
+  margin-left: 160px; /* space for sidebar */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Topbar */
+.topbar {
+  height: 52px;
+  background: #121212;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 36px 0 18px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.search-section { position: relative; display: flex; align-items: center; }
+.search-input {
+  width: 280px;
+  height: 34px;
+  border-radius: 16px;
+  border: none;
+  font-size: 14px;
+  padding: 0 36px 0 12px;
+  outline: none;
+  background: #fff;
+}
+.select-table-btn {
+  background: linear-gradient(180deg,#274edb 0%,#0b3cb8 100%);
+  color: #fff; border: none; border-radius: 8px;
+  font-weight: 700; padding: 8px 16px;
+}
+
+/* Main content and topbar */
+.main-content {
+    margin-left: 118px;
+    min-height: 100vh;
+}
+.topbar {
+    height: 52px;
+    background: #222;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 36px 0 38px;
+    box-shadow: 0 4px 16px #0001;
+}
+.search-section {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+.search-input {
+    width: 270px;
+    height: 30px;
+    border-radius: 15px;
+    border: none;
+    font-size: 14px;
+    padding: 0 32px 0 13px;
+    outline: none;
+    background: #fff;
+    box-sizing: border-box;
+}
+.search-icon {
+    position: absolute;
+    right: 10px;
+    top: 6px;
+    font-size: 15px;
+    color: #555;
+    pointer-events: none;
+}
+.select-table-btn {
+  background: linear-gradient(180deg,#274edb 0%,#0b3cb8 100%);
+  color: #fff; border: none; border-radius: 8px;
+  font-weight: 700; padding: 8px 16px;
+}
+
+/* Inventory Container (uses user's custom margin-left tweak) */
+.inventory-container {
+  background: linear-gradient(180deg,#efeff1 0%, #e1d3e6 100%);
+  margin: 20px;
+  margin-left: calc(5px + 20px);
+  border-radius: 20px;
+  padding: 24px;
+  overflow-y: auto;
+  min-height: calc(100vh - 120px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+}
+
+/* table header / row - default (IMAGE column hidden) */
+/* NOTE: keep overflow visible so header actions can layer above absolute Add button */
+.table-header,
+.table-row {
+  background: rgba(255,255,255,0.95);
+  border-radius: 15px;
+  padding: 18px 28px;
+  display: grid;
+  /* default columns: ID | Name | Price | Category | Stock | Actions */
+  grid-template-columns: 80px 2fr 1fr 1fr 1fr 280px;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 16px;
+  font-weight: 700;
+  color: #333;
+  position: relative;
+  overflow: visible; /* allow header actions to exceed bounds and layer */
+}
+
+/* When images are shown, add an extra column before actions. */
+/* Increased the image column fraction so filenames get more horizontal room. */
+.inventory-container.show-images .table-header,
+.inventory-container.show-images .table-row {
+  grid-template-columns: 80px 2fr 1fr 1fr 1fr 1.5fr 220px; /* extra column for image (wider) */
+}
+
+/* Image column cell */
+.col-image {
+  display: none; /* hidden by default */
+  overflow: visible;
+  white-space: normal;           /* allow wrapping */
+  word-break: break-word;       /* break long words if necessary */
+  overflow-wrap: anywhere;      /* wrap anywhere to avoid overflow */
+  color: #333;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.35;
+  padding-right: 6px;
+}
+
+/* When container has show-images class, reveal image column */
+.inventory-container.show-images .col-image {
+  width: 250px;
+  display: block;
+}
+
+/* Header actions area (contains the toggle) */
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 40;
+  margin-right: 140px; /* keep it left of Add button */
+}
+
+/* Toggle button: prevent wrapping so "Hide Image" stays on one line */
+.btn-toggle {
+  background: transparent;
+  border: 2px solid rgba(255, 43, 244, 0.425);
+  color: #000000;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+
+  display: inline-block;   /* ensure box-level control */
+  white-space: nowrap;     /* prevent the text from wrapping to a new line */
+  min-width: 120px;        /* ensure enough width for "Hide Image" (adjust if needed) */
+  text-align: center;
+}
+.btn-toggle[aria-pressed="true"] {
+  background: linear-gradient(180deg,#d51ecb 0%,#a2058f 100%);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Add Button (club-styled purple) */
+.add-btn {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg,#d51ecb 0%,#a2058f 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(165,10,111,0.18);
+  text-decoration: none;
+  z-index: 30; /* lower than header-actions */
+}
+
+/* Table Row */
+.table-row  {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 28px;
+  display: grid;
+  grid-template-columns: 80px 2fr 1fr 1fr 1fr 280px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.table-row:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(0,0,0,0.06); }
+
+/* Action buttons */
+.action-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-right: -10px ;}
+.btn-edit {
+  background: linear-gradient(180deg,#fde047 0%,#f6c90b 100%);
+  color: #111;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+}
+.btn-delete {
+  background: linear-gradient(180deg,#ff6b6b 0%,#ef4444 100%);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  border: none;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 18px;
+}
+
+/* Custom Scrollbar */
+.inventory-container::-webkit-scrollbar { width: 10px; }
+.inventory-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 10px; }
+
+/* Alerts */
+.alert { padding: 14px 18px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; }
+.alert-success { background: #f6f1fb; color: #4b146f; border: 1px solid rgba(213,30,203,0.12); }
+.alert-error { background: #fff0f3; color: #7a0836; border: 1px solid rgba(239,68,68,0.12); }
+
+/* Form styling (create/edit) */
+.form-card {
+  max-width: 980px;
+  margin: 8px auto 32px;
+  background: linear-gradient(180deg,#ffffff 0%, #fbf7fb 100%);
+  padding: 28px;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(12,8,29,0.04);
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group label { display:block; font-weight:700; margin-bottom:8px; color:#222; }
+.form-group input, .form-group textarea, .form-group select {
+  width:100%; padding:12px 14px; border:1px solid #ececec; border-radius:10px; background:#fff;
+  transition: box-shadow .12s ease, border-color .12s ease;
+}
+.form-group input:focus, .form-group textarea:focus {
+  outline:none; box-shadow: 0 8px 20px rgba(213,30,203,0.06); border-color: #d51ecb;
+}
+
+.form-actions { display:flex; gap:12px; margin-top:18px; justify-content:flex-end; align-items:center; }
+.btn-save {
+  background: linear-gradient(180deg,#d51ecb 0%,#a2058f 100%);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(165,10,111,0.16);
+}
+.btn-save:hover { transform: translateY(-3px); opacity: 0.98; }
+.btn-cancel {
+  background: #6b7280;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 700;
+   text-decoration: none;
+}
+
+/* Responsive tweak: reduce header-action margin when narrow */
+@media (max-width: 900px) {
+  .header-actions { margin-right: 100px; }
+  .add-btn { right: 18px; padding: 8px 14px; }
+}
+/* --- FIXED LAYOUT ADJUSTMENTS FOR INVENTORY PAGE ---
+   Make Topbar, Category Tabs (if present) and Order Section fixed.
+   Append this to the end of css/inventory.css
+*/
+:root{
+  --sidebar-width: 150px;   /* match your .sidebar width */
+  --topbar-height: 52px;    /* match your .topbar height */
+  --order-width: 360px;     /* desired fixed order panel width (change as needed) */
+}
+
+/* Fix the topbar on the inventory page */
+.topbar {
+  position: fixed;
+  left: var(--sidebar-width);
+  right: 0;
+  top: 0;
+  height: var(--topbar-height);
+  z-index: 1200;
+}
+
+/* Ensure inventory content is pushed below the fixed topbar */
+.inventory-container {
+  padding-top: calc(var(--topbar-height) + 14px);
+}
+/* Responsive: mobile fallback */
+@media (max-width: 900px) {
+  .topbar { left: 0; right: 0; }
+  .inventory-container { padding-bottom: calc(48vh + 18px); }
+}
+
+:root {
+  --bg-color: #eee;
+  --main-bg: #ccc;
+  --text-color: #222;
+}
+
+body {
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+.main-content {
+  background: var(--main-bg);
+  transition: background 0.25s;
+}
+
+/* Dark mode overrides */
+body.dark-mode {
+  background: #222;
+  color: #fff;
+}
+body.dark-mode .table-header {
+  background: #363636;
+  color: #fff;
+}
+
+body.dark-mode .col-image {
+  background: #363636;
+  color: #fff;
+}
+body.dark-mode .table-row {
+  background: #363636;
+  color: #fff;
+}
+body.dark-mode .order-section{
+  background: #222;
+  color: #fff;
+}
+body.dark-mode .inventory-container{
+  background: #222;
+  color: #fff;
+}

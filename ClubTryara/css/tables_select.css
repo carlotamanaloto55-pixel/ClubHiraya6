@@ -1,0 +1,147 @@
+/* Scoped styles for "reserved table" checkbox, choose button and summary.
+   Keep these separate to avoid conflicts with global styles.
+   Place file at: ClubTryara/css/tables-select.css
+   Add <link rel="stylesheet" href="css/tables-select.css"> in index.php head (after style.css).
+*/
+
+.order-compute .reserved-table-block {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  font-size: 14px;
+  color: var(--text-color, #222);
+}
+
+/* Label wrapper (keeps pointer area large) */
+.order-compute .reserved-table-block .reserved-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Visually customized checkbox (replaces native appearance) */
+.order-compute #use-reserved-table {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: 0 0 auto;
+  display: inline-block;
+  border: 2px solid rgba(0,0,0,0.16);
+  border-radius: 4px;
+  background: #fff;
+  position: relative;
+  transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* Checked state: club gradient and white checkmark */
+.order-compute #use-reserved-table:checked {
+  background: linear-gradient(180deg, #d51ecb 0%, #a2058f 100%);
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(165,10,111,0.12) inset;
+}
+.order-compute #use-reserved-table:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Focus visible ring for keyboard users */
+.order-compute #use-reserved-table:focus {
+  outline: 3px solid rgba(213,30,203,0.18);
+  outline-offset: 2px;
+}
+
+/* Disabled state for the choose button when checkbox is not checked */
+.order-compute #open-tables-btn {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: linear-gradient(180deg,#274edb 0%,#0b3cb8 100%);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  transition: opacity .12s ease, transform .12s ease;
+}
+.order-compute #open-tables-btn[disabled] {
+  opacity: 0.48;
+  cursor: not-allowed;
+  transform: none;
+  filter: grayscale(.08);
+}
+
+/* Selected table summary (compact) */
+.order-compute #selected-table-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-color, #222);
+  margin-top: 6px;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+}
+.order-compute #selected-table-summary .left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.order-compute #selected-table-price {
+  font-weight: 800;
+  color: #d51ecb;
+}
+
+/* Clear link/button style */
+.order-compute .btn-link,
+.order-compute #clear-selected-table {
+  background: transparent;
+  border: none;
+  color: #666;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 6px;
+  font-size: 13px;
+}
+.order-compute .btn-link:hover,
+.order-compute #clear-selected-table:hover {
+  color: #111;
+}
+
+/* Small responsive tweak */
+@media (max-width: 900px) {
+  .order-compute .reserved-table-block {
+    font-size: 13px;
+  }
+}
+
+/* Dark mode variants (scoped) */
+body.dark-mode .order-compute .reserved-table-block { color: #fff; }
+body.dark-mode .order-compute #use-reserved-table {
+  background: #333;
+  border-color: rgba(255,255,255,0.12);
+}
+body.dark-mode .order-compute #use-reserved-table:checked {
+  /* slightly different gradient for dark theme */
+  background: linear-gradient(180deg,#a2058f 0%,#6f005a 100%);
+  box-shadow: none;
+}
+body.dark-mode .order-compute #open-tables-btn {
+  background: linear-gradient(180deg,#a2058f 0%,#7b006a 100%);
+}
